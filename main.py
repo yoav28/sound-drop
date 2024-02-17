@@ -1,6 +1,7 @@
-import pyaudio, threading
+from utills import *
 import numpy as np
-from utills import freq_to_num
+import pyaudio
+import threading
 
 
 class Listener:
@@ -8,11 +9,12 @@ class Listener:
     def __init__(self):
         self.FORMAT = pyaudio.paInt16
         self.CHANNELS = 1
-        self.RATE = 44100
-        self.CHUNK = 1024
-
-        self.history: list[int] = []
+        self.RATE = RATE
+        self.CHUNK = 1024 * 2
+        self.last_sound = -1
         self.file: list[int] = []
+        self.bm1 = None
+        self.bm2 = None
 
 
     def listen_to_microphone(self):
@@ -29,29 +31,54 @@ class Listener:
             data = np.fromstring(stream.read(self.CHUNK), dtype=np.int16)
             threading.Thread(target=self.process_data, args=(data,)).start()
 
-
     def process_data(self, data: np.ndarray):
         freq = self.find_freq(data)
         byte = freq_to_num(freq)
 
-        if byte == -1:
+        if freq == self.last_sound:
             return
 
-        self.history.append(byte)
+        self.last_sound = freq
 
-        if len(self.history) >= 3 and self.history[-1] == self.history[-2] == self.history[-3]:
-            byte_ = self.history[-1]
-            self.history = []
-            self.file.append(byte_)
+        bms = (self.bm1, self.bm2)
 
-            print(self.file, len(self.file))
+        sd = 100
+
+        if benchmark_1 - sd < freq < benchmark_1 + sd:
+            self.bm1 = benchmark_1 / freq
+            return
+
+        if benchmark_2 - sd < freq < benchmark_2 + sd:
+            self.bm2 = benchmark_2 / freq
+            return
+
+        if None in bms:
+            return
+
+        if byte < 0:
+            if byte == -4:
+                self.on_finish()
+
+            return
+
+        self.file.append(byte)
 
     def find_freq(self, data: np.ndarray) -> int:
         fft = np.abs(np.fft.rfft(data))
         i = np.argmax(fft)
         freq = i * self.RATE / self.CHUNK
-        return int(freq)
+        return freq
 
+    def on_finish(self):
+        with open("test.zip", "wb") as f:
+            for byte in self.file:
+                f.write(byte.to_bytes(1, "big"))
+
+        unzip_files("file.zip", "unzipped")
+        print("Unzipped")
+
+        self.bm1, self.bm2 = None, None
+        self.file = []
 
 
 if __name__ == '__main__':
