@@ -1,5 +1,6 @@
-import threading, pyaudio
+import pyaudio, threading
 import numpy as np
+from utills import freq_to_num
 
 
 class Listener:
@@ -10,7 +11,6 @@ class Listener:
         self.RATE = 44100
         self.CHUNK = 1024
 
-        # Will be bytes later
         self.history: list[int] = []
         self.file: list[int] = []
 
@@ -32,7 +32,7 @@ class Listener:
 
     def process_data(self, data: np.ndarray):
         freq = self.find_freq(data)
-        byte = self.freq_to_byte(freq)
+        byte = freq_to_num(freq)
 
         if byte == -1:
             return
@@ -41,10 +41,10 @@ class Listener:
 
         if len(self.history) >= 3 and self.history[-1] == self.history[-2] == self.history[-3]:
             byte_ = self.history[-1]
-            print(f"Byte: {byte_}")
             self.history = []
             self.file.append(byte_)
 
+            print(self.file, len(self.file))
 
     def find_freq(self, data: np.ndarray) -> int:
         fft = np.abs(np.fft.rfft(data))
@@ -52,17 +52,6 @@ class Listener:
         freq = i * self.RATE / self.CHUNK
         return int(freq)
 
-
-    def freq_to_byte(self, freq: int) -> int:
-        MAX_FREQ = 7000
-        MIN_FREQ = 3000
-
-        if freq < MIN_FREQ or freq > MAX_FREQ:
-            return -1
-
-        x = (freq - MIN_FREQ) / (MAX_FREQ - MIN_FREQ)
-        return int(x * 255)
-        # TODO: convert to byte here
 
 
 if __name__ == '__main__':

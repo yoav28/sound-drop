@@ -1,5 +1,6 @@
 import numpy as np
 import pyaudio
+from utills import num_to_freq
 
 
 def play_sound(frequency, duration):
@@ -21,4 +22,11 @@ def play_sound(frequency, duration):
     p.terminate()
 
 
-play_sound(6000, 3)
+with open("img.png", "rb") as f:
+    data = f.read()
+    a = 0
+    for byte in data:
+        a += 1
+        play_sound(num_to_freq(byte), 0.05)
+        if a > 20:
+            break
