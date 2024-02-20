@@ -13,6 +13,7 @@ class Listener:
         self.last_id = 0
         self.run = True
         self.same_id = False
+        self.started = False
 
     def plot_rounded_spectrum(self, data: np.ndarray) -> dict[int, list[float]]:
         n = len(data)
@@ -106,8 +107,12 @@ class Listener:
 
         peaks = self.find_peaks(d)
 
+        if all([x in peaks for x in START]):
+            self.started = True
+            return
+
         if all([x in peaks for x in STOP]):
-            self.stop()
+            return self.stop()
 
         if len(peaks) != 5:
             return
@@ -136,6 +141,7 @@ class Listener:
         print("File saved as output.txt")
 
         time.sleep(1)
+        self.started = False
         self.file = []
         self.last_id = 0
         self.run = True

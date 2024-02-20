@@ -28,7 +28,7 @@ class Player:
 
     @staticmethod
     def add_freq(freq: int, wave: np.ndarray, t: float, add_hz: bool) -> np.ndarray:
-        if add_hz:
+        if add_hz and freq >= lowest_freq:
             freq += 30
 
         wave += np.sin(2 * np.pi * freq * t)
@@ -47,14 +47,17 @@ class Player:
 
     def play_file(self, filename: str):
         time.sleep(1)
+
         tabs_gen = play_tabs()
         file_gen = self.file_gen(filename)
         random_id = lowest_freq
 
+        self.play_sounds(next(tabs_gen) + START, 0.25)
+
         for freqs in file_gen:
             freqs_to_play = [random_id] + freqs + next(tabs_gen)
-            self.play_sounds(freqs_to_play, 0.2)
-            time.sleep(0.1)
+            self.play_sounds(freqs_to_play, 0.22)
+            time.sleep(0.02)
 
             if random_id == lowest_freq + 9 * interval:
                 random_id = lowest_freq
@@ -63,4 +66,4 @@ class Player:
                 random_id += interval
 
         time.sleep(0.1)
-        self.play_sounds(STOP, 0.3)
+        self.play_sounds(next(tabs_gen) + STOP, 0.25)
