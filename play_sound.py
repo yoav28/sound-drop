@@ -1,12 +1,12 @@
+import numpy as np, pyaudio, time
+from piano import play_tabs
+from Byte import Byte
 from utills import *
-import numpy as np
-import pyaudio
 
 
 class Player:
 
     def __init__(self):
-        self.last_sound = -1
         self.p = pyaudio.PyAudio()
         self.stream = self.p.open(
                 format=pyaudio.paFloat32,
@@ -14,40 +14,53 @@ class Player:
                 rate=RATE,
                 output=True)
 
-    def play_sounds(self, frequencies: list[int], duration: float):
-        for freq in frequencies:
-            self.play_sound(freq, duration)
+    def play_sounds(self, freqs: list[int], duration: float = 0.5, add_hz: bool = True):
+        wave = np.zeros(int(RATE * duration))
+        t = np.linspace(0, duration, int(RATE * duration))
 
-    def play_sound(self, freq: int, duration: float):
-        if freq == self.last_sound:
-            freq += 3
+        if type(freqs) in [int, float]:
+            freqs = [freqs]
 
-        self.last_sound = freq
-        t = np.linspace(0, duration, int(RATE * duration), endpoint=False)
-        wave = 0.5 * np.sin(2 * np.pi * freq * t)
+        for freq in freqs:
+            wave = self.add_freq(freq, wave, t, add_hz)
+
         self.stream.write(wave.astype(np.float32).tobytes())
+
+    @staticmethod
+    def add_freq(freq: int, wave: np.ndarray, t: float, add_hz: bool) -> np.ndarray:
+        if add_hz:
+            freq += 30
+
+        wave += np.sin(2 * np.pi * freq * t)
+        return wave
 
     def stop(self):
         self.stream.stop_stream()
         self.stream.close()
         self.p.terminate()
 
+    @staticmethod
+    def file_gen(filename: str):
+        with open(filename, "rb") as file:
+            for byte in file.read():
+                yield Byte(byte).freq
 
-player = Player()
+    def play_file(self, filename: str):
+        time.sleep(1)
+        tabs_gen = play_tabs()
+        file_gen = self.file_gen(filename)
+        random_id = lowest_freq
 
+        for freqs in file_gen:
+            freqs_to_play = [random_id] + freqs + next(tabs_gen)
+            self.play_sounds(freqs_to_play, 0.2)
+            time.sleep(0.1)
 
-player.play_sounds([benchmark_1, benchmark_2], 0.5)
+            if random_id == lowest_freq + 9 * interval:
+                random_id = lowest_freq
 
-time_to_play = 0.15
+            else:
+                random_id += interval
 
-path = "hello.txt"
-path_to_zip = "hello.zip"
-zip_files([path], path_to_zip)
-
-with open(path_to_zip, "rb") as f:
-    data = f.read()
-
-    for byte in data:
-        player.play_sound(num_to_freq(byte), time_to_play)
-
-player.play_sound(finish_byte, 0.5)
+        time.sleep(0.1)
+        self.play_sounds(STOP, 0.3)
