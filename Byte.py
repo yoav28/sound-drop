@@ -1,7 +1,7 @@
-from utills import *
+from utills import interval, lowest_freq, octave_interval
+
 
 class Byte:
-
     def __init__(self, byte: int = 0):
         self._interval = interval
         self._floor = lowest_freq + 2 * octave_interval
@@ -18,25 +18,16 @@ class Byte:
 
     def _freq(self, floor: int) -> list[int]:
         number = self._x
-        # number is a number between 0 and 255, we will convert it into hex and then split it into two parts
-        hexed = hex(number)
-        hexed = hexed[2:]
-        hexed = hexed.zfill(2)
-        hexed = hexed.upper()
-
-        split1 = int(hexed[0], 16)
-        split2 = int(hexed[1], 16)
-
+        hexed = hex(number)[2:].zfill(2).upper()
+        split1, split2 = int(hexed[0], 16), int(hexed[1], 16)
         split1 = split1 * self._interval + floor
         split2 = split2 * self._interval + floor + octave_interval
-
         return [split1, split2]
 
     @property
     def freq(self) -> list[int]:
         base0 = self._freq(self.floor(0))
         base1 = self._freq(self.floor(2))
-
         return base0 + base1
 
     def set_from_freq(self, freqs: list[int]):

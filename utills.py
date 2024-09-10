@@ -1,7 +1,6 @@
-
 RATE = 44100
 
-lowest_freq = 8_000
+lowest_freq = 8000
 interval = 100
 freqs_per_octave = 16
 octave_interval = interval * freqs_per_octave + interval

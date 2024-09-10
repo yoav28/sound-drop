@@ -1,6 +1,5 @@
 from mingus.containers import Note
 
-
 # Für Elise
 tabs = [
     ['E5'], ['D#5'], ['E5'], ['D#5'], ['E5'], ['B4'], ['D5'], ['C5'], ['A4'], ['C4'], ['E4'], ['A4'], ['B4'],
@@ -14,8 +13,6 @@ tabs = [
     ['D5'], ['C5'], ['E4'], ['A4'], ['G4'], ['F4'], ['E4'], ['C5'], ['E4'], ['A4'], ['G4'], ['F4'], ['E4'],
     ['B4'], ['D5'], ['C5'], ['A4'], ['C4'], ['E4'], ['A4'], ['B4'], ['E4'], ['C5'], ['B4'], ['A4'], ['G#4']
 ]
-
-
 
 def play_tabs():
     while True:
@@ -47,5 +44,3 @@ if __name__ == '__main__':
             break
 
         player.play_sounds(notes, 0.1)
-        # time.sleep(0.5)
-

@@ -1,7 +1,11 @@
-import numpy as np, pyaudio, time, threading, sys, os
+import numpy as np
+import pyaudio
+import time
+import threading
+import os
 from play_sound import Player
 from Byte import Byte
-from utills import *
+from utills import RATE, lowest_freq, highest_freq, interval, octave_interval, octaves, START, STOP
 
 
 class Listener:
@@ -59,22 +63,18 @@ class Listener:
 
             if highest > 3 * median and highest > 3 * average and highest > 0.03:
                 adding = start + lst.index(highest) * interval
-
-                peaks += [adding]
-
-            start += octave_interval
+                peaks.append(adding)
 
         return peaks
 
     def listen(self):
         p = pyaudio.PyAudio()
-
         stream = p.open(
-                format=pyaudio.paFloat32,
-                channels=1,
-                rate=RATE,
-                input=True,
-                frames_per_buffer=self.chunk
+            format=pyaudio.paFloat32,
+            channels=1,
+            rate=RATE,
+            input=True,
+            frames_per_buffer=self.chunk
         )
 
         for _ in range(3):
@@ -82,6 +82,7 @@ class Listener:
 
         while self.run:
             data = stream.read(self.chunk)
+
             if self.same_id:
                 self.same_id = False
                 continue
@@ -96,22 +97,17 @@ class Listener:
     def process(self, audio: np.ndarray, flat: bool = True):
         if flat:
             rounded_freqs = self.plot_rounded_spectrum(audio.flatten())
-
-            d = {}
-            for key, value in rounded_freqs.items():
-                val = np.mean(value)
-                d[key] = val
-
+            d = {key: np.mean(value) for key, value in rounded_freqs.items()}
         else:
             d = audio
 
         peaks = self.find_peaks(d)
 
-        if all([x in peaks for x in START]):
+        if all(x in peaks for x in START):
             self.started = True
             return
 
-        if all([x in peaks for x in STOP]):
+        if all(x in peaks for x in STOP):
             return self.stop()
 
         if len(peaks) != 5:
@@ -124,35 +120,34 @@ class Listener:
 
         try:
             byte = Byte().set_from_freq(peaks[1:])
-
         except ValueError:
             return
 
         self.last_id = id_
         self.file.append(byte)
+        print(f"Byte: {byte}")
 
     def stop(self):
         self.run = False
 
         with open("output.txt", "wb") as file:
             for byte in self.file:
+                print(byte, end="")
                 file.write(bytes(byte))
 
-        print("File saved as output.txt")
+        print("\nFile saved as output.txt")
 
         time.sleep(1)
         self.started = False
         self.file = []
         self.last_id = 0
-        self.run = True
         self.same_id = False
-
 
 
 if __name__ == '__main__':
     player = Player()
 
-    filename = ''
+    filename = 'x'
     while not os.path.exists(filename):
         filename = input("Enter path of file to play: ")
 
